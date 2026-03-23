@@ -1,0 +1,50 @@
+# ═══════════════════════════════════
+# Hati Safi — netlify.toml
+# Netlify build & function settings
+# ═══════════════════════════════════
+
+[build]
+  publish = "."
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "18"
+
+# Redirect /api/analyse → netlify function
+[[redirects]]
+  from = "/api/analyse"
+  to = "/.netlify/functions/analyse"
+  status = 200
+
+# Redirect /api/legal-question → netlify function
+[[redirects]]
+  from = "/api/legal-question"
+  to = "/.netlify/functions/legal-question"
+  status = 200
+
+# Handle client-side routing — all routes serve index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Cache static assets
+[[headers]]
+  for = "/icon-*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/styles.css"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"

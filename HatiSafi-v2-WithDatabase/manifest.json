@@ -1,0 +1,51 @@
+{
+  "name": "Hati Safi – Document Helper",
+  "short_name": "Hati Safi",
+  "description": "AI-powered Kenyan government document explainer with live legal research",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D1F16",
+  "theme_color": "#0D2B1F",
+  "orientation": "portrait",
+  "lang": "en",
+  "categories": ["utilities", "productivity", "legal"],
+  "icons": [
+    {
+      "src": "icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshot-home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Upload a document to analyse"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Upload Document",
+      "short_name": "Upload",
+      "description": "Analyse a new document",
+      "url": "/?action=upload",
+      "icons": [{ "src": "icon-192.svg", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ask Legal Question",
+      "short_name": "Ask",
+      "description": "Ask a legal question",
+      "url": "/?action=ask",
+      "icons": [{ "src": "icon-192.svg", "sizes": "192x192" }]
+    }
+  ]
+}

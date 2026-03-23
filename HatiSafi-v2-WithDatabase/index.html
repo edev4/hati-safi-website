@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0D2B1F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hati Safi">
+<meta name="description" content="AI-powered Kenyan government document explainer with live legal research">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
+<title>Hati Safi – Document Helper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-logo">
+    <div class="splash-emblem">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <rect width="56" height="56" rx="16" fill="#C9A84C"/>
+        <path d="M16 14h24v4H16zM16 22h18v4H16zM16 30h20v4H16zM16 38h14v4H16z" fill="#0D2B1F"/>
+        <circle cx="40" cy="38" r="8" fill="#0D2B1F"/>
+        <path d="M37 38l2 2 4-4" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="splash-name">Hati Safi</div>
+    <div class="splash-tagline">Understand every document</div>
+  </div>
+  <div class="splash-loader"><div class="splash-bar"></div></div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app" style="display:none">
+  <div class="status-fill"></div>
+
+  <!-- HEADER -->
+  <header id="appHeader">
+    <div class="header-left">
+      <div class="header-logo">
+        <svg width="28" height="28" viewBox="0 0 56 56" fill="none">
+          <rect width="56" height="56" rx="16" fill="#C9A84C"/>
+          <path d="M16 14h24v4H16zM16 22h18v4H16zM16 30h20v4H16zM16 38h14v4H16z" fill="#0D2B1F"/>
+          <circle cx="40" cy="38" r="8" fill="#0D2B1F"/>
+          <path d="M37 38l2 2 4-4" stroke="#C9A84C" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-title">Hati Safi</div>
+        <div class="header-sub">AI Document Helper</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="lang-toggle" id="langBtn" onclick="cycleLang()">
+        <span id="langFlag">🇬🇧</span>
+        <span id="langCode">EN</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="mainContent">
+
+    <!-- ══ HOME ══ -->
+    <section class="page active" id="page-home">
+      <div class="hero-strip">
+        <div class="hero-eyebrow">✦ AI + Live Web Research + Database</div>
+        <h1 class="hero-h1">Understand <em>any</em> Kenyan document</h1>
+        <p class="hero-p">Upload a government letter, SHA form, HELB notice, or tender contract — get a plain-language explanation backed by live law research.</p>
+        <div class="hero-chips">
+          <span class="chip">📋 Legal Letters</span>
+          <span class="chip">🏥 SHA / NHIF</span>
+          <span class="chip">🎓 HELB</span>
+          <span class="chip">📑 Gov Tenders</span>
+          <span class="chip">🏦 KRA Notices</span>
+          <span class="chip">🏛️ Court Summons</span>
+        </div>
+      </div>
+
+      <!-- UPLOAD -->
+      <div class="card upload-card" id="uploadCard">
+        <div class="card-label">Step 1 — Upload Document</div>
+        <div class="dropzone" id="dropzone">
+          <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png,.webp" onchange="handleFile(event)">
+          <div class="dz-inner" id="dzInner">
+            <div class="dz-icon">
+              <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                <path d="M16 4v16M10 10l6-6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M6 22v2a2 2 0 002 2h16a2 2 0 002-2v-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="dz-title">Tap to upload or drag here</div>
+            <div class="dz-sub">PDF · JPG · PNG · Phone camera photo</div>
+          </div>
+        </div>
+        <div class="file-pill" id="filePill" style="display:none">
+          <div class="file-pill-icon" id="fpIcon">📄</div>
+          <div class="file-pill-info">
+            <div class="file-pill-name" id="fpName">—</div>
+            <div class="file-pill-size" id="fpSize">—</div>
+          </div>
+          <button class="file-pill-remove" onclick="removeFile()">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M12 4L4 12M4 4l8 8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- QUESTION -->
+      <div class="card">
+        <div class="card-label">Step 2 — Your Question (optional)</div>
+        <textarea class="q-input" id="qInput" placeholder="e.g. What does this letter mean for me? What should I do next?"></textarea>
+        <div class="quick-chips" id="quickChips">
+          <button class="qchip" onclick="quickQ(this,'Explain this in simple language I can understand')">🔍 Explain simply</button>
+          <button class="qchip" onclick="quickQ(this,'What are my rights and legal obligations?')">⚖️ My rights</button>
+          <button class="qchip" onclick="quickQ(this,'What exact steps must I take next and by when?')">📅 Next steps</button>
+          <button class="qchip" onclick="quickQ(this,'What risks or traps should I watch out for?')">⚠️ Risks</button>
+          <button class="qchip" onclick="quickQ(this,'Where can I get free legal help in Kenya?')">🤝 Get help</button>
+        </div>
+      </div>
+
+      <!-- LANGUAGE -->
+      <div class="card lang-card">
+        <div class="card-label">Step 3 — Explain in</div>
+        <div class="lang-pills">
+          <button class="lpill active" data-lang="English" onclick="setLang(this)">English</button>
+          <button class="lpill" data-lang="Kiswahili" onclick="setLang(this)">Kiswahili</button>
+          <button class="lpill" data-lang="Sheng" onclick="setLang(this)">Sheng</button>
+        </div>
+      </div>
+
+      <!-- ANALYSE BUTTON -->
+      <button class="analyse-btn" id="analyseBtn" onclick="analyse()">
+        <span class="ab-icon">✦</span>
+        <span class="ab-text">Analyse Document</span>
+        <span class="ab-sub">with live web research</span>
+      </button>
+
+      <!-- LOADING -->
+      <div class="loading-shell" id="loadingShell" style="display:none">
+        <div class="loading-orb">
+          <div class="orb-ring r1"></div>
+          <div class="orb-ring r2"></div>
+          <div class="orb-ring r3"></div>
+          <div class="orb-core">✦</div>
+        </div>
+        <div class="loading-title" id="loadTitle">Reading document…</div>
+        <div class="loading-sub" id="loadSub">Extracting text and structure</div>
+        <div class="load-steps" id="loadSteps">
+          <div class="lstep" id="ls1"><span class="lstep-dot"></span><span>Reading document content</span></div>
+          <div class="lstep" id="ls2"><span class="lstep-dot"></span><span>Identifying document type</span></div>
+          <div class="lstep" id="ls3"><span class="lstep-dot"></span><span>Searching Kenya laws online</span></div>
+          <div class="lstep" id="ls4"><span class="lstep-dot"></span><span>Fetching official government sources</span></div>
+          <div class="lstep" id="ls5"><span class="lstep-dot"></span><span>Saving to database & generating explanation</span></div>
+        </div>
+        <div class="web-pulse" id="webPulse" style="display:none">
+          <div class="wp-dot"></div>
+          <span id="wpText">Searching: Kenya SHA regulations 2024…</span>
+        </div>
+      </div>
+
+      <!-- ERROR -->
+      <div class="error-shell" id="errorShell" style="display:none">
+        <div class="error-icon">⚠️</div>
+        <div class="error-title">Analysis failed</div>
+        <div class="error-body" id="errorBody">Please ensure your document is clear and try again.</div>
+        <button class="retry-btn" onclick="resetError()">Try Again</button>
+      </div>
+
+      <!-- RESULTS -->
+      <div id="results" style="display:none">
+        <div class="doc-meta-bar" id="docMetaBar"></div>
+        <div class="risk-banner" id="riskBanner"></div>
+        <div class="web-research-badge" id="webBadge" style="display:none">
+          <span class="wrb-icon">🌐</span>
+          <div class="wrb-text">
+            <strong>Live research included</strong>
+            <span id="webBadgeSub">Sources found and verified online</span>
+          </div>
+        </div>
+        <div id="resultCards"></div>
+        <div class="sources-section" id="sourcesSection" style="display:none">
+          <div class="sources-header"><span class="sources-icon">🔗</span><span>Online Sources Referenced</span></div>
+          <div id="sourcesList"></div>
+        </div>
+        <div class="disclaimer">
+          <span>ℹ️</span>
+          <p>Hati Safi provides AI-generated explanations for educational purposes only. This is not legal advice. For serious matters, consult a qualified advocate or legal aid organisation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ HISTORY ══ -->
+    <section class="page" id="page-history">
+      <div class="page-head">
+        <h2 class="page-title">Recent Documents</h2>
+        <button class="clear-btn" onclick="clearHistory()" style="display:none" id="clearHistBtn">Clear</button>
+      </div>
+      <!-- DB Status badge -->
+      <div id="dbStatusBadge" style="display:none" class="web-research-badge" style="margin-bottom:12px">
+        <span class="wrb-icon">🗄️</span>
+        <div class="wrb-text"><strong>Synced with database</strong><span>History saved across devices</span></div>
+      </div>
+      <div id="historyList">
+        <div class="empty-state">
+          <div class="es-icon">🗂️</div>
+          <div class="es-title">No documents yet</div>
+          <div class="es-sub">Analysed documents will appear here</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ ASK ══ -->
+    <section class="page" id="page-search">
+      <div class="page-head"><h2 class="page-title">Ask a Legal Question</h2></div>
+      <div class="card">
+        <div class="card-label">Ask anything about Kenyan law or government services</div>
+        <textarea class="q-input" id="legalQInput" placeholder="e.g. How do I appeal a KRA tax assessment? What are my rights with a court summons? How do HELB repayments work?"></textarea>
+        <button class="analyse-btn sm" id="legalQBtn" onclick="askLegalQuestion()" style="margin-top:12px">
+          <span class="ab-icon">🔍</span>
+          <span class="ab-text">Search & Explain</span>
+        </button>
+      </div>
+      <div class="loading-shell" id="lqLoading" style="display:none">
+        <div class="loading-orb small">
+          <div class="orb-ring r1"></div><div class="orb-ring r2"></div>
+          <div class="orb-core">🔍</div>
+        </div>
+        <div class="loading-title">Researching online…</div>
+        <div class="loading-sub">Searching Kenyan law databases and official sources</div>
+      </div>
+      <div id="lqResults"></div>
+    </section>
+
+    <!-- ══ HELP ══ -->
+    <section class="page" id="page-help">
+      <div class="page-head"><h2 class="page-title">Help & Resources</h2></div>
+      <div class="section-label">🆘 Free Legal Aid in Kenya</div>
+      <div class="help-list">
+        <div class="help-item" onclick="callNumber('0800720519')">
+          <div class="hi-icon" style="background:rgba(201,168,76,0.15)">⚖️</div>
+          <div class="hi-body"><div class="hi-name">Kituo Cha Sheria</div><div class="hi-desc">Free legal aid & representation · 0800 720 519</div></div>
+          <span class="hi-action">📞</span>
+        </div>
+        <div class="help-item" onclick="callNumber('0800723151')">
+          <div class="hi-icon" style="background:rgba(13,43,31,0.2)">🏛️</div>
+          <div class="hi-body"><div class="hi-name">National Legal Aid Service</div><div class="hi-desc">NLAS — Government legal aid · 0800 723 151</div></div>
+          <span class="hi-action">📞</span>
+        </div>
+        <div class="help-item" onclick="callNumber('0703054200')">
+          <div class="hi-icon" style="background:rgba(52,120,246,0.12)">🎓</div>
+          <div class="hi-body"><div class="hi-name">HELB Help Desk</div><div class="hi-desc">Loans & bursaries · 0703 054 200</div></div>
+          <span class="hi-action">📞</span>
+        </div>
+        <div class="help-item" onclick="callNumber('0800720601')">
+          <div class="hi-icon" style="background:rgba(16,185,129,0.12)">🏥</div>
+          <div class="hi-body"><div class="hi-name">SHA (Social Health Authority)</div><div class="hi-desc">Health insurance · 0800 720 601</div></div>
+          <span class="hi-action">📞</span>
+        </div>
+        <div class="help-item" onclick="callNumber('0800221221')">
+          <div class="hi-icon" style="background:rgba(239,68,68,0.12)">💼</div>
+          <div class="hi-body"><div class="hi-name">KRA iTax Helpline</div><div class="hi-desc">Tax queries · 0800 221 221</div></div>
+          <span class="hi-action">📞</span>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px">❓ Common Questions</div>
+      <div id="faqAccordion"></div>
+
+      <div class="install-banner" id="installBanner" style="display:none">
+        <div class="ib-icon">📲</div>
+        <div class="ib-text">
+          <strong>Install Hati Safi</strong>
+          <span>Add to home screen for offline use</span>
+        </div>
+        <button class="ib-btn" id="installBtn" onclick="installApp()">Install</button>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="bnav-item active" id="bnav-home" onclick="switchPage('home','bnav-home')">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none"><path d="M3 12L12 3l9 9M5 10v9a1 1 0 001 1h4v-5h4v5h4a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="bnav-item" id="bnav-history" onclick="switchPage('history','bnav-history')">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>History</span>
+    </button>
+    <button class="bnav-item" id="bnav-search" onclick="switchPage('search','bnav-search')">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Ask</span>
+    </button>
+    <button class="bnav-item" id="bnav-help" onclick="switchPage('help','bnav-help')">
+      <svg class="bnav-icon" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 17v.01M12 13.5a1.5 1.5 0 001.5-1.5c0-1-1.5-2-1.5-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Help</span>
+    </button>
+  </nav>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
