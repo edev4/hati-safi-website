@@ -20,7 +20,7 @@ function initSupabase() {
 // ── SESSION ID ──────────────────────────────────
 function getSessionId() {
   let sid = localStorage.getItem('hati_safi_session');
-  if (!sid) {
+  if (!sid) { 
     sid = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
     localStorage.setItem('hati_safi_session', sid);
   }
