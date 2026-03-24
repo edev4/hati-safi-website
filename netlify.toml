@@ -15,18 +15,21 @@
   from = "/api/analyse"
   to = "/.netlify/functions/analyse"
   status = 200
+  force = true
 
 # Redirect /api/legal-question → netlify function
 [[redirects]]
   from = "/api/legal-question"
   to = "/.netlify/functions/legal-question"
   status = 200
+  force = true
 
 # Handle client-side routing — all routes serve index.html
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  force = true
 
 # Security headers
 [[headers]]
