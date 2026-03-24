@@ -9,7 +9,7 @@ const SUPABASE_KEY = null;
 
 // ── SUPABASE ────────────────────────────────────
 let db;
-function initSupabase() {
+function initSupabase() { 
   try {
     db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   } catch (e) {
