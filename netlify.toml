@@ -48,3 +48,13 @@
   for = "/styles.css"
   [headers.values]
     Cache-Control = "public, max-age=3600"
+
+    [functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[functions."analyse"]
+  timeout = 60
+
+[functions."legal-question"]
+  timeout = 60
