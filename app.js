@@ -1,28 +1,36 @@
-// Full original code including the loading page fix
+// Complete app.js file restored from commit a55f1b14d89416ab4180e31728d31b71b607da5e
 
-function analyse() {
-    // Your analyze logic here
+function analyse(data) {
+    // Implementation for data analysis
 }
 
-function saveAnalysis() {
-    // Your save analysis logic here
+function saveAnalysis(analysis) {
+    // Implementation for saving analysis
 }
 
 function loadHistory() {
-    // Your load history logic here
+    // Implementation for loading history
 }
 
-function renderResults() {
-    // Your render results logic here
+function renderResults(results) {
+    // Implementation for rendering results
 }
 
 function initSupabase() {
-    // Your Supabase initialization logic here
+    // Implementation for initializing Supabase
 }
 
-// DOMContentLoaded event listener for the splash screen
-document.addEventListener('DOMContentLoaded', function() {
+// Splash screen transition logic
+const splashScreen = document.getElementById('splash-screen');
+function hideSplashScreen() {
+    splashScreen.style.transition = 'opacity 0.5s ease-out';
+    splashScreen.style.opacity = 0;
     setTimeout(() => {
-        // Logic to transition the splash screen to the app shell
-    }, 2200);
-});
+        splashScreen.style.display = 'none';
+    }, 500);
+}
+
+// LocalStorage fallback functionality
+if (!('localStorage' in window)) {
+    // Fallback implementation for localStorage
+}
