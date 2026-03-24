@@ -3,7 +3,18 @@
    Secure proxy to Anthropic API for document analysis
    API key is stored in Netlify environment variables
 ═══════════════════════════════════════════════ */
-
+exports.handler = async (event) => {
+  // Increase timeout
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+      body: '',
+    };
+  }
 exports.handler = async (event) => {
   // Only allow POST
   if (event.httpMethod !== 'POST') {
