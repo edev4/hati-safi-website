@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/analyse.js": {
+      "maxDuration": 60
+    },
+    "api/legal-question.js": {
+      "maxDuration": 60
+    }
+  }
+}
