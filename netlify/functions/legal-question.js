@@ -56,7 +56,7 @@ Return ONLY this JSON (no markdown, no backticks):
         model: 'claude-sonnet-4-20250514',
         max_tokens: 2000,
         system: systemPrompt,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        //tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{
           role: 'user',
           content: question + '\n\nSearch online for current Kenya-specific information before answering.',
