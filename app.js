@@ -3,8 +3,8 @@
 // ═══════════════════════════════════════════════
 
 // ── ⚠️  FILL THESE IN ──────────────────────────
-const SUPABASE_URL = 'https://YOUR_PROJECT.supabase.co';
-const SUPABASE_KEY = 'YOUR_ANON_KEY';
+const SUPABASE_URL = null;
+const SUPABASE_KEY = null;
 // ───────────────────────────────────────────────
 
 // ── SUPABASE ────────────────────────────────────
