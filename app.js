@@ -168,8 +168,8 @@ async function analyse() {
 
   try {
     const base64 = await fileToBase64(currentFile);
+    const res  = await fetch('/api/analyse', {
 
-    const res  = await fetch('/.netlify/functions/analyse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
