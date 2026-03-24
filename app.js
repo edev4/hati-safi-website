@@ -180,7 +180,7 @@ async function analyse() {
       }),
     });
 
-    const data = await res.json();
+    const data = await res.text();
     if (!data.success) throw new Error(data.error || 'Analysis failed');
 
     clearInterval(stepTimer);
