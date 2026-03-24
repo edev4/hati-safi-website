@@ -103,7 +103,7 @@ Return ONLY a valid JSON object — no markdown, no backticks:
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 1500,
         system: systemPrompt,
        // tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: userContent }],
