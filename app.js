@@ -146,6 +146,12 @@ function quickQ(el, text) {
 async function analyse() {
   if (!currentFile) { showToast('Please upload a document first'); return; }
 
+  const maxSize = 3 * 1024 * 1024;
+  if (currentFile.size > maxSize) {
+    showToast('File too large — please use a file under 3MB');
+    return;
+  }
+
   const question = document.getElementById('qInput').value.trim();
 
   // Reset UI
