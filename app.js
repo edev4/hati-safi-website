@@ -189,10 +189,15 @@ async function analyse() {
 
     // Safely parse response
     const text = await res.text();
-    if (!text) throw new Error('Server timed out — please try again');
-    const data = JSON.parse(text);
-    if (!data.success) throw new Error(data.error || 'Analysis failed');
-
+if (!text) throw new Error('Server timed out — please try again');
+let data;
+try {
+  data = JSON.parse(text);
+} catch (e) {
+  console.error('Server response:', text);
+  throw new Error('Server error — check Vercel function logs');
+}
+if (!data.success) throw new Error(data.error || 'Analysis failed');
     clearInterval(stepTimer);
     document.getElementById('loadingShell').style.display = 'none';
     document.getElementById('webPulse').style.display     = 'none';
