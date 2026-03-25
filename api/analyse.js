@@ -67,9 +67,17 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
           }),
         });
 
-        if (anthropicRes.ok) {
-          const data    = await anthropicRes.json();
-          const rawText = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
+        const anthropicData = await anthropicRes.json();
+
+        // ⚠️ Check for credit/billing errors even on 200 responses
+        const isCreditsError =
+          anthropicData?.error?.type === 'invalid_request_error' ||
+          anthropicData?.error?.message?.toLowerCase().includes('credit') ||
+          anthropicData?.error?.message?.toLowerCase().includes('billing') ||
+          anthropicData?.type === 'error';
+
+        if (!isCreditsError && anthropicRes.ok) {
+          const rawText = anthropicData.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
           if (rawText.trim()) {
             const clean  = rawText.replace(/```json\n?|```\n?/g, '').trim();
             const match  = clean.match(/\{[\s\S]*\}/);
@@ -77,10 +85,10 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
             console.log('Served by Anthropic');
             return res.status(200).json({ success: true, result: parsed });
           }
-        } else {
-          const errData = await anthropicRes.json().catch(() => ({}));
-          console.warn('Anthropic failed:', errData?.error?.message || anthropicRes.status);
         }
+
+        console.warn('Anthropic unavailable, falling back to Gemini:', anthropicData?.error?.message || 'unknown error');
+
       } catch (anthropicErr) {
         console.warn('Anthropic error, falling back to Gemini:', anthropicErr.message);
       }
@@ -88,8 +96,10 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
 
     // ── Fallback: Gemini ─────────────────────────
     if (!process.env.GEMINI_API_KEY) {
-      throw new Error('No API keys available — please add ANTHROPIC_API_KEY or GEMINI_API_KEY in Vercel settings');
+      throw new Error('No API keys available — please add GEMINI_API_KEY in Vercel settings');
     }
+
+    console.log('Trying Gemini...');
 
     const geminiParts = [];
     geminiParts.push({
@@ -124,7 +134,7 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
     const clean  = rawText.replace(/```json\n?|```\n?/g, '').trim();
     const match  = clean.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(match ? match[0] : clean);
-    console.log('Served by Gemini (fallback)');
+    console.log('Served by Gemini');
     return res.status(200).json({ success: true, result: parsed });
 
   } catch (err) {
