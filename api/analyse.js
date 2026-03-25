@@ -46,7 +46,6 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
       ? `Analyse this document and answer my specific question: "${question}".`
       : 'Analyse this document thoroughly and explain it in plain language.';
 
-    // Build Gemini parts — file + instruction
     const parts = [];
 
     if (isImage || isPdf) {
@@ -60,8 +59,9 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
 
     parts.push({ text: systemPrompt + '\n\n' + userText });
 
+    // Updated model name
     const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
