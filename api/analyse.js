@@ -16,11 +16,9 @@ exports.handler = async (event) => {
     };
   }
 exports.handler = async (event) => {
-  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
   }
-
   // CORS headers — allow your GitHub Pages / Netlify domain
   const headers = {
     'Access-Control-Allow-Origin': '*',
