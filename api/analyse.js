@@ -1,70 +1,60 @@
 /* ═══════════════════════════════════════════════
-   Hati Safi — Netlify Function: analyse.js
+   Hati Safi — Vercel Function: api/analyse.js
    Secure proxy to Anthropic API for document analysis
-   API key is stored in Netlify environment variables
 ═══════════════════════════════════════════════ */
-exports.handler = async (event) => {
-  // Increase timeout
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-      body: '',
-    };
+
+export default async function handler(req, res) {
+
+  // CORS preflight
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
-   export default async function handler(req, res) {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
-  // CORS headers — allow your GitHub Pages / Netlify domain
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'Content-Type': 'application/json',
-  };
 
   try {
-    const body = JSON.parse(event.body);
-    const { fileBase64, fileType, question, language } = body;
+    const { fileBase64, fileType, question, language } = req.body;
 
     if (!fileBase64 || !fileType) {
-      return { statusCode: 400, headers, body: JSON.stringify({ error: 'Missing file data' }) };
+      return res.status(400).json({ error: 'Missing file data' });
     }
 
-    const lang = language || 'English';
-    const isImage = fileType.startsWith('image/');
-    const isPdf = fileType === 'application/pdf';
+    const lang     = language || 'English';
+    const isImage  = fileType.startsWith('image/');
+    const isPdf    = fileType === 'application/pdf';
 
     // Build content for Claude
     const userContent = [];
 
     if (isImage) {
-      userContent.push({ type: 'image', source: { type: 'base64', media_type: fileType, data: fileBase64 } });
+      userContent.push({
+        type: 'image',
+        source: { type: 'base64', media_type: fileType, data: fileBase64 },
+      });
     } else if (isPdf) {
-      userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileBase64 } });
+      userContent.push({
+        type: 'document',
+        source: { type: 'base64', media_type: 'application/pdf', data: fileBase64 },
+      });
     }
 
     userContent.push({
       type: 'text',
       text: question
-        ? `Analyse this document and answer my specific question: "${question}". Also search online for current Kenya laws relevant to this document.`
-        : 'Analyse this document thoroughly. Search online for current Kenya laws, official government sources (sha.go.ke, helb.co.ke, kra.go.ke, ppra.go.ke) relevant to this document type.',
+        ? `Analyse this document and answer my specific question: "${question}".`
+        : 'Analyse this document thoroughly and explain it in plain language.',
     });
 
-    const systemPrompt = `You are Hati Safi, an expert AI assistant helping ordinary Kenyans understand government documents and legal letters. You have web search capability — ALWAYS use it to find current Kenya laws and official sources before responding.
-
-Search for:
-- The latest Kenya laws and regulations for the document type
-- Official government pages (sha.go.ke, helb.co.ke, kra.go.ke, ppra.go.ke, judiciary.go.ke)
-- Free legal aid contacts in Kenya
-- Recent policy changes or updates
+    const systemPrompt = `You are Hati Safi, an expert AI assistant helping ordinary Kenyans understand government documents and legal letters.
 
 Respond in ${lang} using plain, everyday language. No legal jargon.
 
-Return ONLY a valid JSON object — no markdown, no backticks:
+Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
 
 {
   "docType": "Specific document type e.g. HELB Loan Default Letter",
@@ -84,26 +74,21 @@ Return ONLY a valid JSON object — no markdown, no backticks:
   "helpResources": [
     { "name": "Organisation", "description": "What help they offer + contact info", "icon": "emoji" }
   ],
-  "webSources": [
-    { "title": "Page title", "url": "https://url", "snippet": "Brief relevant extract" }
-  ],
-  "liveResearchSummary": "2-3 sentences on what you found online that backs this analysis"
+  "webSources": [],
+  "liveResearchSummary": ""
 }`;
 
-    // Call Anthropic API — key comes from Netlify environment variable
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'web-search-2025-03-05',
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1500,
         system: systemPrompt,
-       // tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: userContent }],
       }),
     });
@@ -115,7 +100,6 @@ Return ONLY a valid JSON object — no markdown, no backticks:
 
     const data = await response.json();
 
-    // Extract text blocks (after tool use)
     const rawText = data.content
       .filter(b => b.type === 'text')
       .map(b => b.text)
@@ -123,23 +107,14 @@ Return ONLY a valid JSON object — no markdown, no backticks:
 
     if (!rawText.trim()) throw new Error('Empty response from AI');
 
-    // Parse JSON from response
-    const clean = rawText.replace(/```json\n?|```\n?/g, '').trim();
-    const match = clean.match(/\{[\s\S]*\}/);
+    const clean  = rawText.replace(/```json\n?|```\n?/g, '').trim();
+    const match  = clean.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(match ? match[0] : clean);
 
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ success: true, result: parsed }),
-    };
+    return res.status(200).json({ success: true, result: parsed });
 
   } catch (err) {
     console.error('analyse function error:', err);
-    return {
-      statusCode: 500,
-      headers,
-      body: JSON.stringify({ success: false, error: err.message }),
-    };
+    return res.status(500).json({ success: false, error: err.message });
   }
-};
+}
