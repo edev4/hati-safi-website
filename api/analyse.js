@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════
    Hati Safi — Vercel Function: api/analyse.js
-   Anthropic (primary) → Gemini (fallback)
+   Powered by Google Gemini
 ═══════════════════════════════════════════════ */
 
 export default async function handler(req, res) {
@@ -12,8 +12,13 @@ export default async function handler(req, res) {
 
   try {
     const { fileBase64, fileType, question, language } = req.body;
+
     if (!fileBase64 || !fileType) {
       return res.status(400).json({ error: 'Missing file data' });
+    }
+
+    if (!process.env.GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY not set in Vercel environment variables' });
     }
 
     const lang    = language || 'English';
@@ -41,74 +46,19 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
       ? `Analyse this document and answer my specific question: "${question}".`
       : 'Analyse this document thoroughly and explain it in plain language.';
 
-    // ── Try Anthropic first ──────────────────────
-    if (process.env.ANTHROPIC_API_KEY) {
-      try {
-        const userContent = [];
-        if (isImage) {
-          userContent.push({ type: 'image', source: { type: 'base64', media_type: fileType, data: fileBase64 } });
-        } else if (isPdf) {
-          userContent.push({ type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileBase64 } });
-        }
-        userContent.push({ type: 'text', text: userText });
+    // Build Gemini parts — file + instruction
+    const parts = [];
 
-        const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': process.env.ANTHROPIC_API_KEY,
-            'anthropic-version': '2023-06-01',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 1500,
-            system: systemPrompt,
-            messages: [{ role: 'user', content: userContent }],
-          }),
-        });
-
-        const anthropicData = await anthropicRes.json();
-
-        // ⚠️ Check for credit/billing errors even on 200 responses
-        const isCreditsError =
-          anthropicData?.error?.type === 'invalid_request_error' ||
-          anthropicData?.error?.message?.toLowerCase().includes('credit') ||
-          anthropicData?.error?.message?.toLowerCase().includes('billing') ||
-          anthropicData?.type === 'error';
-
-        if (!isCreditsError && anthropicRes.ok) {
-          const rawText = anthropicData.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
-          if (rawText.trim()) {
-            const clean  = rawText.replace(/```json\n?|```\n?/g, '').trim();
-            const match  = clean.match(/\{[\s\S]*\}/);
-            const parsed = JSON.parse(match ? match[0] : clean);
-            console.log('Served by Anthropic');
-            return res.status(200).json({ success: true, result: parsed });
-          }
-        }
-
-        console.warn('Anthropic unavailable, falling back to Gemini:', anthropicData?.error?.message || 'unknown error');
-
-      } catch (anthropicErr) {
-        console.warn('Anthropic error, falling back to Gemini:', anthropicErr.message);
-      }
+    if (isImage || isPdf) {
+      parts.push({
+        inline_data: {
+          mime_type: isImage ? fileType : 'application/pdf',
+          data: fileBase64,
+        },
+      });
     }
 
-    // ── Fallback: Gemini ─────────────────────────
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('No API keys available — please add GEMINI_API_KEY in Vercel settings');
-    }
-
-    console.log('Trying Gemini...');
-
-    const geminiParts = [];
-    geminiParts.push({
-      inline_data: {
-        mime_type: isImage ? fileType : 'application/pdf',
-        data: fileBase64,
-      },
-    });
-    geminiParts.push({ text: systemPrompt + '\n\n' + userText });
+    parts.push({ text: systemPrompt + '\n\n' + userText });
 
     const geminiRes = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
@@ -116,8 +66,11 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: geminiParts }],
-          generationConfig: { maxOutputTokens: 1500, temperature: 0.3 },
+          contents: [{ parts }],
+          generationConfig: {
+            maxOutputTokens: 1500,
+            temperature: 0.3,
+          },
         }),
       }
     );
@@ -129,16 +82,17 @@ Return ONLY a valid JSON object — no markdown, no backticks, no extra text:
 
     const geminiData = await geminiRes.json();
     const rawText    = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
     if (!rawText.trim()) throw new Error('Empty response from Gemini');
 
     const clean  = rawText.replace(/```json\n?|```\n?/g, '').trim();
     const match  = clean.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(match ? match[0] : clean);
-    console.log('Served by Gemini');
+
     return res.status(200).json({ success: true, result: parsed });
 
   } catch (err) {
-    console.error('analyse function error:', err);
+    console.error('analyse error:', err);
     return res.status(500).json({ success: false, error: err.message });
   }
 }
