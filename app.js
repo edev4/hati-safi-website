@@ -9,7 +9,8 @@ const SUPABASE_KEY = null;
 
 // ── SUPABASE ────────────────────────────────────
 let db;
-function initSupabase() { 
+function initSupabase() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
   try {
     db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   } catch (e) {
@@ -20,7 +21,7 @@ function initSupabase() {
 // ── SESSION ID ──────────────────────────────────
 function getSessionId() {
   let sid = localStorage.getItem('hati_safi_session');
-  if (!sid) { 
+  if (!sid) {
     sid = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
     localStorage.setItem('hati_safi_session', sid);
   }
@@ -47,7 +48,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   setupPWA();
   setupDragDrop();
   await loadHistory();
-  hideSplashScreen();         // ← this is what was missing
+  hideSplashScreen();
 });
 
 // ── STATE ────────────────────────────────────────
@@ -155,8 +156,8 @@ async function analyse() {
   const question = document.getElementById('qInput').value.trim();
 
   // Reset UI
-  document.getElementById('results').style.display     = 'none';
-  document.getElementById('errorShell').style.display  = 'none';
+  document.getElementById('results').style.display      = 'none';
+  document.getElementById('errorShell').style.display   = 'none';
   document.getElementById('loadingShell').style.display = 'block';
   document.getElementById('analyseBtn').disabled = true;
 
@@ -174,8 +175,8 @@ async function analyse() {
 
   try {
     const base64 = await fileToBase64(currentFile);
-    const res  = await fetch('/api/analyse', {
 
+    const res = await fetch('/api/analyse', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -186,7 +187,10 @@ async function analyse() {
       }),
     });
 
-    const data = await res.text();
+    // Safely parse response
+    const text = await res.text();
+    if (!text) throw new Error('Server timed out — please try again');
+    const data = JSON.parse(text);
     if (!data.success) throw new Error(data.error || 'Analysis failed');
 
     clearInterval(stepTimer);
@@ -209,12 +213,34 @@ async function analyse() {
   }
 }
 
-function fileToBase64(file) {
+// Compresses images before sending to stay under 4.5MB Vercel limit
+async function fileToBase64(file) {
+  if (file.type.startsWith('image/')) {
+    return await compressImage(file);
+  }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload  = () => resolve(reader.result.split(',')[1]);
     reader.onerror = reject;
     reader.readAsDataURL(file);
+  });
+}
+
+async function compressImage(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 800;
+      let w = img.width, h = img.height;
+      if (w > h) { h = (h / w) * maxDim; w = maxDim; }
+      else       { w = (w / h) * maxDim; h = maxDim; }
+      canvas.width  = w;
+      canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL('image/jpeg', 0.6).split(',')[1]);
+    };
+    img.src = URL.createObjectURL(file);
   });
 }
 
@@ -227,22 +253,22 @@ async function saveAnalysis(r, userQuestion) {
   if (!db) return;
   try {
     await db.from('analyses').insert({
-      file_name:            currentFile?.name || null,
-      file_type:            currentFile?.type || null,
-      doc_type:             r.docType,
-      language:             currentLang,
-      risk:                 r.risk,
-      risk_explanation:     r.riskExplanation,
-      summary:              r.summary,
-      answer_to_question:   r.answerToQuestion || null,
-      key_terms:            r.keyTerms         || [],
-      action_steps:         r.actionSteps      || [],
-      deadlines:            r.deadlines        || [],
-      help_resources:       r.helpResources    || [],
-      web_sources:          r.webSources       || [],
+      file_name:             currentFile?.name || null,
+      file_type:             currentFile?.type || null,
+      doc_type:              r.docType,
+      language:              currentLang,
+      risk:                  r.risk,
+      risk_explanation:      r.riskExplanation,
+      summary:               r.summary,
+      answer_to_question:    r.answerToQuestion || null,
+      key_terms:             r.keyTerms         || [],
+      action_steps:          r.actionSteps      || [],
+      deadlines:             r.deadlines        || [],
+      help_resources:        r.helpResources    || [],
+      web_sources:           r.webSources       || [],
       live_research_summary: r.liveResearchSummary || null,
-      session_id:           getSessionId(),
-      user_question:        userQuestion || null,
+      session_id:            getSessionId(),
+      user_question:         userQuestion || null,
     });
   } catch (e) {
     console.error('Save analysis error:', e);
@@ -272,8 +298,8 @@ function renderResults(r) {
   }
 
   let html = '';
-  if (r.summary)           html += card('📋 Summary', `<p>${r.summary}</p>`);
-  if (r.answerToQuestion)  html += card('💬 Answer to Your Question', `<p>${r.answerToQuestion}</p>`);
+  if (r.summary)             html += card('📋 Summary', `<p>${r.summary}</p>`);
+  if (r.answerToQuestion)    html += card('💬 Answer to Your Question', `<p>${r.answerToQuestion}</p>`);
   if (r.liveResearchSummary) html += card('🌐 Live Research', `<p>${r.liveResearchSummary}</p>`);
   if (r.actionSteps?.length)
     html += card('✅ What You Should Do', `<ol style="padding-left:18px">${r.actionSteps.map(s => `<li style="margin-bottom:6px">${s}</li>`).join('')}</ol>`);
@@ -384,12 +410,15 @@ async function askLegalQuestion() {
   document.getElementById('legalQBtn').disabled       = true;
 
   try {
-    const res  = await fetch('/.netlify/functions/legal-question', {
+    const res = await fetch('/api/legal-question', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question: q, language: currentLang }),
     });
-    const data = await res.json();
+
+    const text = await res.text();
+    if (!text) throw new Error('Server timed out — please try again');
+    const data = JSON.parse(text);
     if (!data.success) throw new Error(data.error);
 
     const r = data.result;
@@ -475,8 +504,8 @@ function toggleFAQ(i) {
   const ans   = document.getElementById('faq-a-' + i);
   const arrow = document.getElementById('faq-arrow-' + i);
   const open  = ans.style.display !== 'none';
-  ans.style.display        = open ? 'none' : 'block';
-  arrow.style.transform    = open ? 'rotate(0deg)' : 'rotate(90deg)';
+  ans.style.display     = open ? 'none' : 'block';
+  arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
 }
 
 // ── PWA INSTALL ───────────────────────────────────
