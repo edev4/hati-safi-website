@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Hati Safi – Login & Sign Up</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f4f6f9;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .auth-card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 2rem 2rem 2.5rem;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* ── Logo / Brand ── */
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+    .brand-icon {
+      width: 40px; height: 40px;
+      background: #1a73e8;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .brand-icon svg { width: 22px; height: 22px; fill: #fff; }
+    .brand-name { font-size: 20px; font-weight: 700; color: #1a1a1a; letter-spacing: -0.5px; }
+    .brand-name span { color: #1a73e8; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      background: #f0f2f5;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 1.75rem;
+    }
+    .tab {
+      flex: 1;
+      padding: 9px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #666;
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-radius: 7px;
+      transition: all 0.2s;
+    }
+    .tab.active {
+      background: #fff;
+      color: #1a1a1a;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+    }
+
+    /* ── Headings ── */
+    .screen-title { font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 4px; }
+    .screen-sub   { font-size: 13px; color: #888; margin-bottom: 1.5rem; }
+
+    /* ── Form Fields ── */
+    .field { margin-bottom: 1rem; }
+    label.lbl { display: block; font-size: 13px; font-weight: 500; color: #444; margin-bottom: 5px; }
+    input.inp {
+      width: 100%;
+      font-size: 14px;
+      padding: 10px 14px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 9px;
+      background: #fafafa;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    input.inp:focus { border-color: #1a73e8; background: #fff; }
+
+    /* ── Password toggle ── */
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 50px; }
+    .eye-btn {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer;
+      font-size: 12px; color: #999; font-weight: 500;
+    }
+    .eye-btn:hover { color: #1a73e8; }
+
+    /* ── Password Strength ── */
+    .pw-bar-bg { height: 4px; background: #eee; border-radius: 4px; margin-top: 7px; }
+    .pw-bar { height: 4px; border-radius: 4px; width: 0%; transition: width 0.3s, background 0.3s; }
+    .pw-hint { font-size: 11px; color: #aaa; margin-top: 4px; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      width: 100%;
+      padding: 11px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      background: #1a73e8;
+      border: none;
+      border-radius: 9px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+    .btn-primary:hover  { background: #1558b0; }
+    .btn-primary:active { transform: scale(0.98); }
+
+    .btn-outline {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      background: #fff;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 9px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-outline:hover { background: #f5f7fa; }
+
+    /* ── Divider ── */
+    .divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 1.25rem 0; color: #bbb; font-size: 12px;
+    }
+    .divider-line { flex: 1; height: 1px; background: #eee; }
+
+    /* ── Links ── */
+    .forgot-link { text-align: right; margin: -0.4rem 0 1rem; }
+    .forgot-link a, .link { font-size: 13px; color: #1a73e8; cursor: pointer; text-decoration: none; }
+    .forgot-link a:hover, .link:hover { text-decoration: underline; }
+    .switch-link { text-align: center; margin-top: 1.25rem; font-size: 13px; color: #888; }
+
+    /* ── Screen toggling ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* ── Back button ── */
+    .back-btn {
+      background: none; border: none; cursor: pointer; padding: 0;
+      font-size: 13px; color: #888; display: inline-flex; align-items: center;
+      gap: 4px; margin-bottom: 1rem;
+    }
+    .back-btn:hover { color: #1a73e8; }
+
+    /* ── Success box ── */
+    .success-box {
+      background: #e8f5e9; border: 1.5px solid #a5d6a7;
+      border-radius: 9px; padding: 14px 16px;
+      font-size: 14px; color: #2e7d32;
+      margin-bottom: 1.25rem; line-height: 1.5;
+    }
+    .success-box strong { font-weight: 600; }
+
+    /* ── Terms ── */
+    .terms { font-size: 12px; color: #aaa; text-align: center; margin-top: 1rem; line-height: 1.5; }
+    .terms a { color: #1a73e8; }
+  </style>
+</head>
+<body>
+
+<div class="auth-card">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon">
+      <!-- Document / file icon -->
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 20V4h5v7h7v9H6z"/>
+      </svg>
+    </div>
+    <div class="brand-name">Hati <span>Safi</span></div>
+  </div>
+
+  <!-- Tabs (hidden on forgot screen) -->
+  <div class="tabs" id="main-tabs">
+    <button class="tab active" onclick="switchTab('login')">Log in</button>
+    <button class="tab" onclick="switchTab('signup')">Sign up</button>
+  </div>
+
+  <!-- ════════ LOGIN SCREEN ════════ -->
+  <div id="screen-login" class="screen active">
+    <p class="screen-title">Welcome back</p>
+    <p class="screen-sub">Log in to your Hati Safi account</p>
+
+    <div class="field">
+      <label class="lbl">Email address</label>
+      <input class="inp" type="email" id="login-email" placeholder="you@example.com" />
+    </div>
+    <div class="field">
+      <label class="lbl">Password</label>
+      <div class="pass-wrap">
+        <input class="inp" type="password" id="login-pass" placeholder="••••••••" />
+        <button class="eye-btn" onclick="togglePass('login-pass', this)">Show</button>
+      </div>
+    </div>
+    <div class="forgot-link"><a onclick="showScreen('forgot')">Forgot password?</a></div>
+
+    <button class="btn-primary" onclick="doLogin()">Log in</button>
+
+    <div class="divider">
+      <div class="divider-line"></div>or<div class="divider-line"></div>
+    </div>
+
+    <button class="btn-outline" onclick="googleAuth()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.859-3.048.859-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.583c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.583 9 3.583z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="switch-link">No account? <a class="link" onclick="switchTab('signup')">Sign up</a></div>
+  </div>
+
+  <!-- ════════ SIGNUP SCREEN ════════ -->
+  <div id="screen-signup" class="screen">
+    <p class="screen-title">Create your account</p>
+    <p class="screen-sub">Start using Hati Safi for free</p>
+
+    <div class="field">
+      <label class="lbl">Full name</label>
+      <input class="inp" type="text" id="signup-name" placeholder="Jane Doe" />
+    </div>
+    <div class="field">
+      <label class="lbl">Email address</label>
+      <input class="inp" type="email" id="signup-email" placeholder="you@example.com" />
+    </div>
+    <div class="field">
+      <label class="lbl">Password</label>
+      <div class="pass-wrap">
+        <input class="inp" type="password" id="signup-pass" placeholder="••••••••" oninput="checkStrength(this.value)" />
+        <button class="eye-btn" onclick="togglePass('signup-pass', this)">Show</button>
+      </div>
+      <div class="pw-bar-bg"><div class="pw-bar" id="pw-bar"></div></div>
+      <div class="pw-hint" id="pw-hint"></div>
+    </div>
+
+    <button class="btn-primary" onclick="doSignup()">Create account</button>
+
+    <div class="divider">
+      <div class="divider-line"></div>or<div class="divider-line"></div>
+    </div>
+
+    <button class="btn-outline" onclick="googleAuth()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908C16.658 14.013 17.64 11.705 17.64 9.2z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.859-3.048.859-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.706A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.706V4.962H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.038l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.583c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.962L3.964 7.294C4.672 5.163 6.656 3.583 9 3.583z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+
+    <div class="terms">By signing up, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</div>
+    <div class="switch-link">Already have an account? <a class="link" onclick="switchTab('login')">Log in</a></div>
+  </div>
+
+  <!-- ════════ FORGOT PASSWORD SCREEN ════════ -->
+  <div id="screen-forgot" class="screen">
+    <button class="back-btn" onclick="showScreen('login')">&#8592; Back to log in</button>
+    <p class="screen-title">Reset your password</p>
+    <p class="screen-sub">Enter your email — we'll send a reset link</p>
+
+    <div id="forgot-form">
+      <div class="field">
+        <label class="lbl">Email address</label>
+        <input class="inp" type="email" id="forgot-email" placeholder="you@example.com" />
+      </div>
+      <button class="btn-primary" onclick="doForgot()">Send reset link</button>
+    </div>
+
+    <div id="forgot-success" style="display:none;">
+      <div class="success-box">
+        ✓ Reset link sent! Check the inbox for <strong id="sent-to"></strong> and follow the instructions.
+      </div>
+      <button class="btn-outline" onclick="showScreen('login')">Back to log in</button>
+    </div>
+  </div>
+
+</div><!-- /auth-card -->
+
+<script>
+  /* ── Screen helpers ── */
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) =>
+      t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'signup' && i === 1))
+    );
+    showScreen(tab);
+    document.getElementById('main-tabs').style.display = 'flex';
+  }
+
+  function showScreen(name) {
+    ['login', 'signup', 'forgot'].forEach(s =>
+      document.getElementById('screen-' + s).classList.toggle('active', s === name)
+    );
+    document.getElementById('main-tabs').style.display = name === 'forgot' ? 'none' : 'flex';
+  }
+
+  /* ── Password visibility ── */
+  function togglePass(id, btn) {
+    const inp = document.getElementById(id);
+    if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
+    else { inp.type = 'password'; btn.textContent = 'Show'; }
+  }
+
+  /* ── Password strength ── */
+  function checkStrength(val) {
+    const bar = document.getElementById('pw-bar');
+    const hint = document.getElementById('pw-hint');
+    if (!val) { bar.style.width = '0%'; hint.textContent = ''; return; }
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const map = [
+      { w: '25%', c: '#e53935', t: 'Too weak' },
+      { w: '50%', c: '#fb8c00', t: 'Fair' },
+      { w: '75%', c: '#fdd835', t: 'Good' },
+      { w: '100%', c: '#43a047', t: 'Strong' }
+    ];
+    const l = map[score - 1] || map[0];
+    bar.style.width = l.w; bar.style.background = l.c; hint.textContent = l.t;
+  }
+
+  /* ── Actions — wire these to your backend ── */
+  function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass  = document.getElementById('login-pass').value;
+    if (!email || !pass) { alert('Please fill in all fields.'); return; }
+
+    // ↓ Replace this with your real API call
+    console.log('Login:', { email, pass });
+    alert('Login successful! (Connect to your backend here)');
+  }
+
+  function doSignup() {
+    const name  = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const pass  = document.getElementById('signup-pass').value;
+    if (!name || !email || !pass) { alert('Please fill in all fields.'); return; }
+    if (pass.length < 8) { alert('Password must be at least 8 characters.'); return; }
+
+    // ↓ Replace this with your real API call
+    console.log('Signup:', { name, email, pass });
+    alert('Account created! (Connect to your backend here)');
+  }
+
+  function doForgot() {
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) { alert('Please enter your email.'); return; }
+
+    // ↓ Replace this with your real API call
+    console.log('Password reset for:', email);
+    document.getElementById('sent-to').textContent = email;
+    document.getElementById('forgot-form').style.display = 'none';
+    document.getElementById('forgot-success').style.display = 'block';
+  }
+
+  function googleAuth() {
+    // ↓ Replace with your Google OAuth flow (e.g. Firebase or OAuth2 redirect)
+    alert('Google OAuth — connect your provider here.');
+  }
+</script>
+
+</body>
+</html>
